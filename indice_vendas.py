@@ -9,7 +9,8 @@ def main():
         variable="11707",
         header="n",
         format="list",
-        period="202204"
+        period="202204",
+        classifications= {"11046": "56734"},
     )
     print(varejo)
 
