@@ -1,1 +1,4 @@
-START_DATE = "01/2012"
+# Stores user preferences
+
+
+START_DATE = "2012-01-01"
