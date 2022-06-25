@@ -21,8 +21,74 @@ def main():
 
     workbook, worksheet = list_to_workbook(indices)
     write_formulas(workbook, worksheet)
+    make_chart(workbook, indices)
 
     workbook.close()
+
+
+def make_chart(workbook : xlsxwriter.Workbook, indices : list[Index]):
+    
+    global indices_length
+
+    chart_start = chart_start_finder(indices)
+    chartsheet = workbook.add_chartsheet('Gráfico')
+    chart = workbook.add_chart({'type': 'line'})
+
+    chart.add_series({
+        'name': 'Varejo',
+        'categories': f'=Dados!$A${6 + chart_start}:$A${5 + indices_length}',
+        'values': f'=Dados!$G${6 + chart_start}:$G${5 + indices_length}',
+        'line': {'color': '#c00000'}
+    })
+
+    chart.add_series({
+        'name': 'Varejo ampliado',
+        'categories': f'=Dados!$A${6 + chart_start}:$A${5 + indices_length}',
+        'values': f'=Dados!$H${6 + chart_start}:$H${5 + indices_length}',
+        'line': {'color': '#4472c4'}
+    })
+
+    chart.add_series({
+        'name': 'Indústria',
+        'categories': f'=Dados!$A${6 + chart_start}:$A${5 + indices_length}',
+        'values': f'=Dados!$I${6 + chart_start}:$I${5 + indices_length}',
+        'line': {'color': '#70ad47'}
+    })
+
+    chart.add_series({
+        'name': 'Serviços',
+        'categories': f'=Dados!$A${6 + chart_start}:$A${5 + indices_length}',
+        'values': f'=Dados!$J${6 + chart_start}:$J${5 + indices_length}',
+        'line': {'color': '#ffc000'}
+    })
+
+    chart.add_series({
+        'categories': f'=Dados!$A${6 + chart_start}:$A${5 + indices_length}',
+        'values': f'=Dados!$K${6 + chart_start}:$K${5 + indices_length}',
+        'line': {'color': 'black'}
+    })
+
+    chart.set_x_axis(x_axis_config)
+    chart.set_y_axis(y_axis_config)
+    chart.set_legend(legend_config)
+
+    chartsheet.set_chart(chart)
+
+# Returns position of chart start date
+def chart_start_finder(indices : list[Index]):
+    
+    global indices_length
+
+    dates = []
+    for i in range(indices_length):
+        dates.append(indices[i].date)
+
+    chart_start = CHART_START_DATE
+    chart_start = datetime.date.fromisoformat(chart_start)
+
+    for i in range(len(dates)):
+        if dates[i] == chart_start:
+            return i
 
 
 def write_formulas(workbook : xlsxwriter.Workbook, worksheet : xlsxwriter.Workbook.worksheet_class):
@@ -68,7 +134,7 @@ def list_to_workbook(indices : list[Index]):
     global indices_length
     global date_format
 
-    workbook = xlsxwriter.Workbook('Índices de vendas.xlsx')
+    workbook = xlsxwriter.Workbook('índices_de_vendas_py.xlsx')
     worksheet = workbook.add_worksheet('Dados')
 
     global merge_format 
@@ -168,7 +234,6 @@ def get_data(period : str):
 
     indices = []
 
-    # Possible problem if not all series are up to date
     for i in range(longest):
 
         indices.append(Index(retail[i]["date"], retail[i]["value"], ext_retail[i]["value"], industry[i]["value"], services[i]["value"]))
