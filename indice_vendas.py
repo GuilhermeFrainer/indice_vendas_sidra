@@ -1,4 +1,5 @@
 from heapq import merge
+from numpy import indices, number
 from sidrapy import get_table
 from user_config import *
 from index import Index
@@ -7,25 +8,72 @@ import xlsxwriter
 import json
 
 
+# Global variables
+merge_format = None
+indices_length = None
+date_format = None
+
+
 def main():
 
     period = get_period()
     indices = get_data(period)
 
     workbook, worksheet = list_to_workbook(indices)
+    write_formulas(workbook, worksheet)
 
     workbook.close()
+
+
+def write_formulas(workbook : xlsxwriter.Workbook, worksheet : xlsxwriter.Workbook.worksheet_class):
+    
+    global merge_format
+
+    number_format = workbook.add_format({'num_format': '##0.0'})
+    
+    # Writes headers
+    worksheet.merge_range('G1:J1', 'Valores de correção a partir de 2018', merge_format)
+    worksheet.merge_range('G4:J4', 'Corrigidos', merge_format)
+
+    worksheet.write('G5', 'Varejo')
+    worksheet.write('H5', 'Varejo ampliado')
+    worksheet.write('I5', 'Indústria')
+    worksheet.write('J5', 'Serviços')
+    worksheet.write('K5', 100)
+
+    # Writes values to adjust to
+    worksheet.write_formula('G2', f'=LARGE(B6:B{5 + indices_length},1)', number_format)
+    worksheet.write_formula('H2', f'=LARGE(C6:C{5 + indices_length},1)', number_format)
+    worksheet.write_formula('I2', f'=LARGE(D6:D{5 + indices_length},1)', number_format)
+    worksheet.write_formula('J2', f'=LARGE(E6:E{5 + indices_length},1)', number_format)
+
+    # Writes months of the values above
+    worksheet.write_formula('G3', f'=INDEX($A6:$A{indices_length + 5},MATCH(G2,B6:B{indices_length + 5},0))', date_format)
+    worksheet.write_formula('H3', f'=INDEX($A6:$A{indices_length + 5},MATCH(H2,C6:C{indices_length + 5},0))', date_format)
+    worksheet.write_formula('I3', f'=INDEX($A6:$A{indices_length + 5},MATCH(I2,D6:D{indices_length + 5},0))', date_format)
+    worksheet.write_formula('J3', f'=INDEX($A6:$A{indices_length + 5},MATCH(J2,E6:E{indices_length + 5},0))', date_format)
+
+    # Actually writes formulas
+    for i in range(indices_length):
+        worksheet.write_formula(f'G{6 + i}', f'=B{6 + i}*100/G$2', number_format)
+        worksheet.write_formula(f'H{6 + i}', f'=C{6 + i}*100/H$2', number_format)
+        worksheet.write_formula(f'I{6 + i}', f'=D{6 + i}*100/I$2', number_format)
+        worksheet.write_formula(f'J{6 + i}', f'=E{6 + i}*100/J$2', number_format)
+        worksheet.write(f'K{6 + i}', 100)
 
 
 # Takes the data and puts it into an Excel file. Returns workbook and worksheet
 def list_to_workbook(indices : list[Index]):
     
+    global indices_length
+    global date_format
+
     workbook = xlsxwriter.Workbook('Índices de vendas.xlsx')
     worksheet = workbook.add_worksheet('Dados')
 
-    # Writes headers for unadjusted data
+    global merge_format 
     merge_format = workbook.add_format({'align': 'center'})
-    
+
     worksheet.write('A5', 'Mês')
     worksheet.write('B5', 'Varejo')
     worksheet.write('C5', 'Varejo ampliado')
@@ -37,7 +85,9 @@ def list_to_workbook(indices : list[Index]):
     # Writes the data into the worksheet
     date_format = workbook.add_format({'num_format': 'mmm-yy'})
     
-    for i in range(len(indices)):
+    indices_length = len(indices)
+
+    for i in range(indices_length):
         worksheet.write_datetime(f'A{6 + i}', indices[i].date, date_format)
         worksheet.write(f'B{6 + i}', indices[i].retail)
         worksheet.write(f'C{6 + i}', indices[i].ext_retail)
@@ -45,6 +95,7 @@ def list_to_workbook(indices : list[Index]):
         worksheet.write(f'E{6 + i}', indices[i].services)
 
     return workbook, worksheet
+
 
 # Returns period string going from chosen start date to current month
 def get_period():
@@ -106,10 +157,19 @@ def get_data(period : str):
     industry = api_to_list(industry) 
     services = api_to_list(services)
 
+    # Determines the longest series
+    lengths = [len(retail), len(ext_retail), len(industry), len(services)]
+    longest = 0
+
+    for i in range(len(lengths)):
+
+        if lengths[i] > longest:
+            longest = lengths[i]
+
     indices = []
 
     # Possible problem if not all series are up to date
-    for i in range(len(retail)):
+    for i in range(longest):
 
         indices.append(Index(retail[i]["date"], retail[i]["value"], ext_retail[i]["value"], industry[i]["value"], services[i]["value"]))
     
