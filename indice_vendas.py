@@ -1,11 +1,8 @@
-from heapq import merge
-from numpy import indices, number
 from sidrapy import get_table
 from user_config import *
 from index import Index
 import datetime
 import xlsxwriter
-import json
 
 
 # Global variables
@@ -22,6 +19,7 @@ def main():
     workbook, worksheet = list_to_workbook(indices)
     write_formulas(workbook, worksheet)
     make_chart(workbook, indices)
+    credits(workbook)
 
     workbook.close()
 
@@ -73,6 +71,7 @@ def make_chart(workbook : xlsxwriter.Workbook, indices : list[Index]):
     chart.set_legend(legend_config)
 
     chartsheet.set_chart(chart)
+
 
 # Returns position of chart start date
 def chart_start_finder(indices : list[Index]):
@@ -250,6 +249,32 @@ def api_to_list(list: list):
         out_list.append({"date": list[i]["D2C"], "value": float(list[i]["V"])})
 
     return out_list
+
+
+# Adds sources and link to GitHub repository
+def credits(workbook : xlsxwriter.Workbook):
+    
+    worksheet = workbook.add_worksheet('Fontes')
+
+    worksheet.write('A1', 'Varejo')
+    worksheet.write('A2', 'Tabela 8185 - Índice e variação da receita nominal e do volume de vendas no comércio varejista (2014 = 100)')
+    worksheet.write('A3', 'Variável - PMC - Número índice com ajuste sazonal (2014=100) (Número-índice)')
+    worksheet.write('A4', 'Tipos de índice - Índice de volume de vendas no comércio varejista')
+
+    worksheet.write('A6', 'Varejo ampliado')
+    worksheet.write('A7', 'Tabela 8186 - Índice e variação da receita nominal e do volume de vendas no comércio varejista ampliado (2014 = 100)')
+    worksheet.write('A8', 'Variável - PMC - Número índice com ajuste sazonal (2014=100) (Número-índice)')
+    worksheet.write('A9', 'Tipos de índice - Índice de volume de vendas no comércio varejista ampliado')
+
+    worksheet.write('A11', 'Indústria')
+    worksheet.write('A12', 'Tabela 8159 - Produção Física Industrial, por seções e atividades industriais')
+    worksheet.write('A13', 'Variável - PIMPF - Número índice com ajuste sazonal (2012=100) (Número-índice)')
+    worksheet.write('A14', 'Seções e atividades industriais (CNAE 2.0) - 1 Indústria geral')
+
+    worksheet.write('A16', 'Serviços')
+    worksheet.write('A17', 'Tabela 8161 - Índice e variação da receita nominal e do volume de serviços (2014 = 100)')
+    worksheet.write('A18', 'Variável - PMS - Número índice com ajuste sazonal (2014=100) (Número-índice)')
+    worksheet.write('A19', 'Tipos de índice - Índice de volume de serviços')
 
 
 if __name__ == '__main__':
