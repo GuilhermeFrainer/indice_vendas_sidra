@@ -1,4 +1,4 @@
 # Stores user preferences
 
 
-START_DATE = "2012-01-01"
+START_DATE = "2022-01-01"
