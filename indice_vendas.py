@@ -8,16 +8,8 @@ import json
 def main():
 
     period = get_period()
-    retail, ext_retail, industry, services = get_data(period)
+    indices = get_data(period)
 
-    print("Varejo:")
-    print(retail)
-    print("Varejo ampliado")
-    print(ext_retail)
-    print("Indústria")
-    print(industry)
-    print("Serviços")
-    print(services)
 
 # Returns period string going from chosen start date to current month
 def get_period():
@@ -27,7 +19,7 @@ def get_period():
     return f"{start_date.year}{start_date.month:02d}-{today.year}{today.month:02d}"
 
 
-# Gets the data form the API and returns lists with dates and values
+# Gets the data form the API and returns a list of objects from the Index class
 def get_data(period : str):
     
     retail = get_table(
@@ -74,9 +66,19 @@ def get_data(period : str):
         classifications={"11046": "56725"}
     )
 
+    retail = api_to_list(retail) 
+    ext_retail = api_to_list(ext_retail) 
+    industry = api_to_list(industry) 
+    services = api_to_list(services)
 
-    return api_to_list(retail), api_to_list(ext_retail), api_to_list(industry), api_to_list(services)
+    indices = []
+
+    # Possible problem if not all series are up to date
+    for i in range(len(retail)):
+
+        indices.append(Index(retail[i]["date"], retail[i]["value"], ext_retail[i]["value"], industry[i]["value"], services[i]["value"]))
     
+    return indices
 
 # Gets api data and returns it as a list of dicts
 def api_to_list(list: list):
