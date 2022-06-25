@@ -276,6 +276,9 @@ def credits(workbook : xlsxwriter.Workbook):
     worksheet.write('A18', 'Variável - PMS - Número índice com ajuste sazonal (2014=100) (Número-índice)')
     worksheet.write('A19', 'Tipos de índice - Índice de volume de serviços')
 
+    worksheet.write('A21', 'Tabela criada em Python. Código em:')
+    worksheet.write('A22', 'https://github.com/GuilhermeFrainer/indice_vendas_sidra')
+
 
 if __name__ == '__main__':
     main()
